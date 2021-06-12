@@ -2,6 +2,9 @@
 
 **ConcertX** exists to help bring unique concerts to life. It's a funding platform where every musician sets their concerts funding goal and deadline.
 
+ConcertX seeks help backers pledge to concerts to help them come to life and support a creative process. To thank their backers for their support, musicians offer unique rewards that speak to the spirit of what they're hoping to create.
+
+
 ## Getting Started 🤘
 
 - Empower People, Recording studios, and Music to create **Web 3.0** concerts.
