@@ -5,11 +5,17 @@
 ConcertX seeks help backers pledge to concerts to help them come to life and support a creative process. To thank their backers for their support, musicians offer unique rewards that speak to the spirit of what they're hoping to create.
 
 
-## Getting Started 🤘
+## Getting Started 🚀
 
-- Empower People, Recording studios, and Music to create **Web 3.0** concerts.
+- Empower People, Recording studios, and Music creating **Web 3.0** concerts.
 - From your room, from the comfort of your home, from a recording studio; create music to be heard from anywhere.
-- Be rebellious! *Smart contracts* allow trusted transactions directly with your audience without a central authority.
+- Immersion for your audience; provides with VR and 3D cross-platform experiences a unique perception of your music for your fans.
+- Be rebellious! 🤘 **Smart contracts** allow trusted transactions directly with your audience without a central authority. 🏛️
+
+## Dependencies
+
+- [Cardano](https://docs.cardano.org/en/latest/) - Smart Contracts
+- [BabylonJS React Native](https://www.babylonjs.com/reactnative/) - Babylon React Native combines the React Native framework with the power, beauty, and simplicity of Babylon.js to unlock the ability to create 3D cross-platform experiences.
 
 ## Supporting 🍻
 I believe in Unicorns 🦄
