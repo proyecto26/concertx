@@ -14,7 +14,7 @@ ConcertX seeks help backers pledge to concerts to help them come to life and sup
 
 ## Dependencies
 
-- [Cardano](https://docs.cardano.org/en/latest/) - Smart Contracts
+- [NEAR](https://docs.near.org/docs/develop/basics/getting-started) - Smart Contracts
 - [BabylonJS React Native](https://www.babylonjs.com/reactnative/) - Babylon React Native combines the React Native framework with the power, beauty, and simplicity of Babylon.js to unlock the ability to create 3D cross-platform experiences.
 
 ## Supporting 🍻
