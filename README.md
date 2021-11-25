@@ -90,6 +90,11 @@ As you can see in `package.json`, this does two things:
 ## Dependencies
 
 - [NEAR](https://docs.near.org/docs/develop/basics/getting-started) - Smart Contracts
+- [Rust](https://docs.near.org/docs/develop/contracts/rust/intro#installing-the-rust-toolchain) - `rustup default 1.56.1`
+- [wasm-pack](https://rustwasm.github.io/docs/wasm-pack/) - Building, testing, and publishing Rust-generated WebAssembly.
+- [cargo](https://doc.rust-lang.org/cargo/) - `cargo install --force cargo-audit --features=fix`
+- [wasm32-unknown-unknown](https://github.com/rustwasm/wasm-bindgen/issues/979) - `rustup target add wasm32-unknown-unknown`
+- [cargo-generate](https://github.com/cargo-generate/cargo-generate) - `cargo install cargo-generate`
 - [BabylonJS React Native](https://www.babylonjs.com/reactnative/) - Babylon React Native combines the React Native framework with the power, beauty, and simplicity of Babylon.js to unlock the ability to create 3D cross-platform experiences.
 
 ## Troubleshooting
