@@ -34,5 +34,6 @@ overflow-checks = true
 [workspace]
 # remember to include a member for each contract
 members = [
-  "nft"
+  "nft",
+  "fund-concert",
 ]
