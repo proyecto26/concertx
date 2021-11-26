@@ -1,8 +1,10 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::UnorderedMap;
-use near_sdk::{env, near_bindgen, AccountId, init, Timestamp};
+use near_sdk::{env, near_bindgen, AccountId, init, Timestamp, log, Promise};
 
 near_sdk::setup_alloc!();
+
+const STORAGE_COST: u128 = 5870000000000000000000;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
@@ -87,19 +89,29 @@ impl ConcertCampaign {
         campaign_end: Timestamp,
         start_date: Timestamp,
         end_date: Timestamp,
-        artist: AccountId,
         goal: u128
-    ) {
+    ) -> Concert{
+        log!("Creating new concert campaign");
+        let artist = env::signer_account_id();
         let concert = Concert::new(name, campaign_end, start_date, end_date, &artist, goal);
         self.concerts.insert(&artist, &concert);
+        log!("New concert campaign created!");
+        concert
     }
 
     #[payable]
-    pub fn concert_add_donation(&mut self, concert_id: AccountId, donor: AccountId, donation: u128) -> bool {
+    pub fn concert_add_donation(&mut self, concert_id: AccountId) -> bool {
+        let donor = env::signer_account_id();
+        let donation = env::attached_deposit();
         let concert = self.concerts.get(&concert_id);
         match concert {
             Some(mut concert) => {
-                if concert.is_active() {
+                if concert.is_campaign_active() {
+                    let account_id = concert.artist.to_string();
+                    // TODO: Check if the account is the same as the artist
+                    // TODO: Substract the storage cost
+                    // Promise::new(account_id).transfer(donation);
+                    log!("Donation added to concert {}.", donation);
                     concert.add_donation(donor, donation);
                     true
                 } else {
@@ -107,28 +119,6 @@ impl ConcertCampaign {
                 }
             }
             None => false
-        }
-    }
-
-    #[payable]
-    pub fn concert_refund_donation(&mut self, concert_id: AccountId, donor: AccountId) -> Option<u128> {
-        let concert = self.concerts.get(&concert_id);
-        match concert {
-            Some(mut concert) => {
-                if concert.is_active() {
-                    let amount = concert.refund_donation(donor);
-                    match amount {
-                        Some(amount) => {
-                            // TODO: refund the donation
-                            Some(amount)
-                        },
-                        None => None
-                    }
-                } else {
-                    None
-                }
-            }
-            None => None
         }
     }
 }
@@ -140,10 +130,17 @@ mod tests {
     use near_sdk::MockedBlockchain;
     use near_sdk::{testing_env, VMContext};
 
-    fn get_context(input: Vec<u8>, is_view: bool) -> VMContext {
+    const DONATION_VALUE: u128 = 5870000000000000000000000000000000000;
+
+    fn get_context(input: Vec<u8>, is_view: bool, is_donor: bool) -> VMContext {
+        let signer_account_id = if is_donor {
+            "alice.near".to_string()
+        } else {
+            "bob.near".to_string()
+        };
         VMContext {
-            current_account_id: "alice_near".to_string(),
-            signer_account_id: "bob_near".to_string(),
+            current_account_id: signer_account_id.to_string(),
+            signer_account_id,
             signer_account_pk: vec![0, 1, 2],
             predecessor_account_id: "carol_near".to_string(),
             input,
@@ -152,7 +149,7 @@ mod tests {
             account_balance: 0,
             account_locked_balance: 0,
             storage_usage: 0,
-            attached_deposit: 0,
+            attached_deposit: DONATION_VALUE,
             prepaid_gas: 10u64.pow(18),
             random_seed: vec![0, 1, 2],
             is_view,
@@ -162,22 +159,36 @@ mod tests {
     }
 
     #[test]
-    fn set_get_message() {
-        let context = get_context(vec![], false);
+    fn new_concert_campaign() {
+        let context = get_context(vec![], false, false);
         testing_env!(context);
-        let mut contract = StatusMessage::default();
-        contract.set_status("hello".to_string());
-        assert_eq!(
-            "hello".to_string(),
-            contract.get_status("bob_near".to_string()).unwrap()
-        );
+        let mut contract = ConcertCampaign::default();
+        let campaign_created = contract.new_concert_campaign("Concert 1".to_string(), 100, 0, 100, 100);
+        assert_eq!(campaign_created.name, "Concert 1");
+        assert_eq!(campaign_created.artist, "bob.near");
+        assert_eq!(contract.concerts.len(), 1);
     }
 
     #[test]
-    fn get_nonexistent_message() {
-        let context = get_context(vec![], true);
+    fn concert_add_donation() {
+        let context = get_context(vec![], false, false);
         testing_env!(context);
-        let contract = StatusMessage::default();
-        assert_eq!(None, contract.get_status("francis.near".to_string()));
+        let mut contract = ConcertCampaign::default();
+        let _campaign_created = contract.new_concert_campaign("Concert 1".to_string(), 100, 0, 100, 100);
+
+        let context = get_context(vec![], false, true);
+        testing_env!(context);
+
+        let artist = "bob.near".to_string();
+        let donation_complete = contract.concert_add_donation(artist);
+        let artist = "bob.near".to_string();
+
+        assert_eq!(donation_complete, true);
+        assert_eq!(contract.concerts.len(), 1);
+
+        // TODO: Check if the donation was added to the concert
+        assert_eq!(contract.concerts.get(&artist).unwrap().donors.len(), 1);
+        assert_eq!(contract.concerts.get(&artist).unwrap().total_donations(), DONATION_VALUE);
+        
     }
 }
