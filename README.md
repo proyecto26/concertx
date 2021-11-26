@@ -93,6 +93,15 @@ Methods {
 
 Every smart contract in NEAR has its [own associated account][NEAR accounts]. When you run `yarn dev`, your smart contract gets deployed to the live NEAR TestNet with a throwaway account. When you're ready to make it permanent, here's how.
 
+#### Results
+- **`yarn dev:deploy:contract`**:
+```
+Starting deployment. Account id: dev-1637966996278-93666838534892, node: https://rpc.testnet.near.org, helper: https://helper.testnet.near.org, file: ./out/main.wasm
+Transaction Id EgjpDYiJwgcUb1ixiciSL1N7Jnnho6o3oi4qjmYK8tkw
+To see the transaction in the transaction explorer, please open this url in your browser
+https://explorer.testnet.near.org/transactions/EgjpDYiJwgcUb1ixiciSL1N7Jnnho6o3oi4qjmYK8tkw
+Done deploying to dev-1637966996278-93666838534892
+```
 
 Step 0: Install near-cli (optional)
 -------------------------------------
