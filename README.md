@@ -39,6 +39,56 @@ Go ahead and play with the app and the code. As you make code changes, the app w
    code gets tested with [jest]. You can run both of these at once with `yarn
    run test`.
 
+### Smart Contracts
+
+- [Fund Concert](./contract/fund-concert) - Create concerts and get funding
+```
+ConcertCampaign {
+   concerts: UnorderedMap<AccountId, Concert>,
+}
+Concert {
+   name: string,
+   compaignAt: timestamp,
+   startAt: timestamp,
+   endAt: timestamp, // support multiple days for concerts
+   artist: accountId,
+   donors: Map<accountId, u128>,
+   goal: u128
+}
+Methods {
+   totalDonations
+   isFunded // Reach goal
+   isConcertActive
+   isCampaignActive
+   addDonation
+}
+```
+- [NFTs for Concerts](./contract/nft) - Tickets and marketplace for concerts
+```
+NFT {
+   token_id: TokenId,
+   receiver_id: AccountId,
+   token_metadata: TokenMetadata
+}
+Methods {
+   nft_mint // payable
+}
+```
+
+- [Followers for Users](./contract/src) - Data associated with User accounts like followers, etc
+```
+Followers {
+   followers: UnorderedSet<AccountId>,
+   following: UnorderedSet<AccountId>,
+}
+Methods {
+   follow
+   get_followers
+   get_following
+   get_relationships
+}
+```
+
 ### Deploy
 
 Every smart contract in NEAR has its [own associated account][NEAR accounts]. When you run `yarn dev`, your smart contract gets deployed to the live NEAR TestNet with a throwaway account. When you're ready to make it permanent, here's how.
@@ -92,6 +142,7 @@ As you can see in `package.json`, this does two things:
 
 ## Dependencies
 
+- [yarn](https://yarnpkg.com/) - Package manager for dependencies
 - [NEAR](https://docs.near.org/docs/develop/basics/getting-started) - Smart Contracts
 - [Rust](https://docs.near.org/docs/develop/contracts/rust/intro#installing-the-rust-toolchain) - `rustup default 1.56.1`
 - [wasm-pack](https://rustwasm.github.io/docs/wasm-pack/) - Building, testing, and publishing Rust-generated WebAssembly.
