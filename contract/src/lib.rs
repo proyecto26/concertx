@@ -1,79 +1,80 @@
-/*
- * This is an example of a Rust smart contract with two simple, symmetric functions:
- *
- * 1. set_greeting: accepts a greeting, such as "howdy", and records it for the user (account_id)
- *    who sent the request
- * 2. get_greeting: accepts an account_id and returns the greeting saved for it, defaulting to
- *    "Hello"
- *
- * Learn more about writing NEAR smart contracts with Rust:
- * https://github.com/near/near-sdk-rs
- *
- */
-
-// To conserve gas, efficient serialization is achieved through Borsh (http://borsh.io/)
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::{env, near_bindgen, setup_alloc};
-use near_sdk::collections::LookupMap;
+use near_sdk::collections::{LookupMap, UnorderedSet};
+use near_sdk::{env, near_bindgen, setup_alloc, AccountId, BorshStorageKey};
 
 setup_alloc!();
 
-// Structs in Rust are similar to other languages, and may include impl keyword as shown below
-// Note: the names of the structs are not important when calling the smart contract, but the function names are
+#[derive(BorshSerialize, BorshStorageKey)]
+enum StorageKey {
+    FollowersIds,
+    FollowingIds,
+    Records,
+}
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct Welcome {
-    records: LookupMap<String, String>,
+pub struct Relationships {
+    followers: UnorderedSet<AccountId>,
+    following: UnorderedSet<AccountId>,
 }
 
-impl Default for Welcome {
-  fn default() -> Self {
-    Self {
-      records: LookupMap::new(b"a".to_vec()),
-    }
-  }
-}
-
-#[near_bindgen]
-impl Welcome {
-    pub fn set_greeting(&mut self, message: String) {
-        let account_id = env::signer_account_id();
-
-        // Use env::log to record logs permanently to the blockchain!
-        env::log(format!("Saving greeting '{}' for account '{}'", message, account_id,).as_bytes());
-
-        self.records.insert(&account_id, &message);
-    }
-
-    // `match` is similar to `switch` in other languages; here we use it to default to "Hello" if
-    // self.records.get(&account_id) is not yet defined.
-    // Learn more: https://doc.rust-lang.org/book/ch06-02-match.html#matching-with-optiont
-    pub fn get_greeting(&self, account_id: String) -> String {
-        match self.records.get(&account_id) {
-            Some(greeting) => greeting,
-            None => "Hello".to_string(),
+impl Default for Relationships {
+    fn default() -> Self {
+        Self {
+            followers: UnorderedSet::new(StorageKey::FollowersIds),
+            following: UnorderedSet::new(StorageKey::FollowingIds),
         }
     }
 }
 
-/*
- * The rest of this file holds the inline tests for the code above
- * Learn more about Rust tests: https://doc.rust-lang.org/book/ch11-01-writing-tests.html
- *
- * To run from contract directory:
- * cargo test -- --nocapture
- *
- * From project root, to run in combination with frontend tests:
- * yarn test
- *
- */
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct Followers {
+    records: LookupMap<AccountId, Relationships>,
+}
+
+impl Default for Followers {
+    fn default() -> Self {
+        Self {
+            records: LookupMap::new(StorageKey::Records),
+        }
+    }
+}
+
+#[near_bindgen]
+impl Followers {
+    pub fn follow(&mut self, follow_account_id: AccountId) {
+        let account_id = env::signer_account_id();
+        let mut signer_relationships = self.get_relationships(&account_id);
+        let mut follow_account_relationships = self.get_relationships(&follow_account_id);
+        signer_relationships.following.insert(&follow_account_id);
+        follow_account_relationships.followers.insert(&account_id);
+        self.records.insert(&account_id, &signer_relationships);
+        self.records
+            .insert(&follow_account_id, &follow_account_relationships);
+    }
+
+    pub fn get_followers(&mut self, account_id: AccountId) -> UnorderedSet<AccountId> {
+        self.get_relationships(&account_id).followers
+    }
+
+    pub fn get_following(&mut self, account_id: AccountId) -> UnorderedSet<AccountId> {
+        self.get_relationships(&account_id).following
+    }
+
+    fn get_relationships(&mut self, account_id: &AccountId) -> Relationships {
+        match self.records.get(&account_id) {
+            Some(relations) => relations,
+            None => Relationships::default(),
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
     use near_sdk::MockedBlockchain;
     use near_sdk::{testing_env, VMContext};
 
-    // mock the context for testing, notice "signer_account_id" that was accessed above from env::
     fn get_context(input: Vec<u8>, is_view: bool) -> VMContext {
         VMContext {
             current_account_id: "alice_near".to_string(),
@@ -96,26 +97,47 @@ mod tests {
     }
 
     #[test]
-    fn set_then_get_greeting() {
+    fn follow_then_check_followers() {
         let context = get_context(vec![], false);
         testing_env!(context);
-        let mut contract = Welcome::default();
-        contract.set_greeting("howdy".to_string());
+        let mut contract = Followers::default();
+        let test_account_id = "testing_near".to_string();
+        let mut test_account_followers = contract.get_followers(test_account_id.clone());
+
         assert_eq!(
-            "howdy".to_string(),
-            contract.get_greeting("bob_near".to_string())
+            test_account_followers.len(),
+            0,
+            "Test account followers should be empty at the beginning"
+        );
+        contract.follow(test_account_id.clone());
+        test_account_followers = contract.get_followers(test_account_id.clone());
+        assert_eq!(
+            test_account_followers.len(),
+            1,
+            "Test account followers should have one element after execution of follow function"
         );
     }
 
     #[test]
-    fn get_default_greeting() {
-        let context = get_context(vec![], true);
+    fn follow_then_check_following() {
+        let context = get_context(vec![], false);
+        let signer_account_id = context.signer_account_id.clone();
         testing_env!(context);
-        let contract = Welcome::default();
-        // this test did not call set_greeting so should return the default "Hello" greeting
+        let mut contract = Followers::default();
+        let test_account_id = "testing_near".to_string();
+        let mut signer_following = contract.get_following(signer_account_id.clone());
+
         assert_eq!(
-            "Hello".to_string(),
-            contract.get_greeting("francis.near".to_string())
+            signer_following.len(),
+            0,
+            "Contract signer should not be following anyone at the beginning"
+        );
+        contract.follow(test_account_id.to_string());
+        signer_following = contract.get_following(signer_account_id.clone());
+        assert_eq!(
+            signer_following.len(),
+            1,
+            "Contract signer should be following one person after execution of follow function"
         );
     }
 }
