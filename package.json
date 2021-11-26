@@ -14,7 +14,9 @@
     "prestart": "npm run build:contract:debug && npm run dev:deploy:contract",
     "start": "echo The app is starting! It will automatically open in your browser when ready && env-cmd -f ./neardev/dev-account.env parcel src/index.html --open",
     "dev": "nodemon --watch contract/src -e rs --exec \"npm run start\"",
-    "test": "npm run build:contract:debug && cd contract && cargo test -- --nocapture && cd .. && jest test --runInBand"
+    "test:contract": "cd contract && cargo test --all --  --nocapture && cd ..",
+    "test:web": "jest test --runInBand",
+    "test": "npm run build:contract:debug && npm run test:contract && npm run test:web"
   },
   "devDependencies": {
     "@babel/core": "~7.14.0",

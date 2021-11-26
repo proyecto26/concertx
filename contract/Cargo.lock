@@ -197,6 +197,7 @@ dependencies = [
 name = "greeter"
 version = "0.1.0"
 dependencies = [
+ "fund-concert",
  "getrandom",
  "js-sys",
  "near-contract-standards",

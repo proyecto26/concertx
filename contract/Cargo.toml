@@ -14,6 +14,7 @@ near-sdk = "3.1.0"
 near-contract-standards = {path ="../near-contract-standards-3.2.0"}
 
 # remember to include a line for each contract
+fund-concert = { path = "./fund-concert" }
 non-fungible-token = { path = "./nft" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
